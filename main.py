@@ -94,6 +94,7 @@ def _build_dependencies(
         classifier: StubWasteClassifier | YoloWasteClassifier = YoloWasteClassifier(
             settings.yolo_model_path,
             confidence_threshold=settings.yolo_confidence,
+            skip_class_names=settings.yolo_skip_classes,
         )
     else:
         classifier = StubWasteClassifier(category=settings.stub_waste_category)
@@ -109,7 +110,13 @@ def main() -> int:
     parser.add_argument(
         "--once",
         action="store_true",
-        help="Un solo ciclo y termina. Por defecto el programa repite: ENTER/serial -> captura -> ... hasta Ctrl+C.",
+        help="Un solo ciclo y termina (prioridad sobre --continuous).",
+    )
+    parser.add_argument(
+        "--continuous",
+        action="store_true",
+        help="Repite ciclos sin fin (Ctrl+C). Por defecto: siempre con --sensor enter/serial; "
+        "con --sensor immediate solo si pasas este flag (si no, un ciclo y sale).",
     )
     parser.add_argument(
         "--category",
@@ -196,6 +203,12 @@ def main() -> int:
         default=None,
         help="Umbral de confianza YOLO (0-1). Por defecto RAS_YOLO_CONFIDENCE.",
     )
+    parser.add_argument(
+        "--yolo-skip",
+        type=str,
+        default=None,
+        help="Clases COCO a ignorar, separadas por coma (ej. person). RAS_YOLO_SKIP_CLASSES.",
+    )
     args = parser.parse_args()
 
     settings = Settings()
@@ -221,6 +234,8 @@ def main() -> int:
         settings = settings.model_copy(update={"yolo_model_path": args.yolo_model})
     if args.yolo_conf is not None:
         settings = settings.model_copy(update={"yolo_confidence": args.yolo_conf})
+    if args.yolo_skip is not None:
+        settings = settings.model_copy(update={"yolo_skip_classes": args.yolo_skip})
 
     if args.sensor == "serial":
         sensor_mode: Literal["enter", "immediate", "serial"] = "serial"
@@ -261,6 +276,9 @@ def main() -> int:
             camera.end_cycle_release_for_next_trigger()
             if args.once:
                 break
+            should_continue = args.continuous or sensor_mode in ("enter", "serial")
+            if not should_continue:
+                break
             if sensor_mode == "enter":
                 _log.info(
                     "Camara cerrada. Pulse ENTER para simular otro objeto cerca (sensor de cercania)."
@@ -270,7 +288,9 @@ def main() -> int:
                     "Camara cerrada. Esperando la siguiente linea desde Arduino (p. ej. OBJECT_DETECTED)."
                 )
             else:
-                _log.info("Camara cerrada. Siguiente ciclo inmediato (--sensor immediate).")
+                _log.info(
+                    "Camara cerrada. Modo continuo (--continuous). Siguiente ciclo sin espera."
+                )
     except KeyboardInterrupt:
         print("\nInterrumpido por el usuario (Ctrl+C).", file=sys.stderr)
     except RuntimeError as exc:

@@ -1,4 +1,5 @@
 import logging
+from typing import FrozenSet
 
 import cv2
 import numpy as np
@@ -8,14 +9,27 @@ from adapters.yolo_coco_mapping import coco_class_name_to_waste_category
 from domain.models import ClassificationOutput, WasteCategory
 
 
+def _parse_skip_class_names(raw: str) -> FrozenSet[str]:
+    return frozenset(p.strip().lower() for p in raw.split(",") if p.strip())
+
+
 class YoloWasteClassifier:
     """Clasificador de residuos con YOLOv8 (COCO) y mapeo heurístico a categorías de reciclaje."""
 
-    def __init__(self, model_path: str, *, confidence_threshold: float = 0.35) -> None:
+    def __init__(
+        self,
+        model_path: str,
+        *,
+        confidence_threshold: float = 0.35,
+        skip_class_names: str = "person",
+    ) -> None:
         self._log = logging.getLogger("ras.yolo")
         self._conf = max(0.0, min(1.0, confidence_threshold))
+        self._skip = _parse_skip_class_names(skip_class_names)
         self._model = YOLO(model_path)
         self._log.info("Modelo YOLO cargado: %s", model_path)
+        if self._skip:
+            self._log.info("Clases YOLO ignoradas: %s", ", ".join(sorted(self._skip)))
 
     def classify_waste(self, image_bytes: bytes) -> ClassificationOutput:
         decoded = np.frombuffer(image_bytes, dtype=np.uint8)
@@ -44,10 +58,25 @@ class YoloWasteClassifier:
                 confidence=0.0,
                 raw_label="no_detection",
             )
-        best_idx = int(boxes.conf.argmax().item())
+        names = results[0].names
+        order = boxes.conf.argsort(descending=True)
+        best_idx: int | None = None
+        for j in order:
+            idx = int(j.item())
+            cls_id = int(boxes.cls[idx].item())
+            raw_name = str(names[cls_id])
+            if raw_name.strip().lower() in self._skip:
+                continue
+            best_idx = idx
+            break
+        if best_idx is None:
+            return ClassificationOutput(
+                category=WasteCategory.UNKNOWN,
+                confidence=0.0,
+                raw_label="only_skipped_classes",
+            )
         conf = float(boxes.conf[best_idx].item())
         cls_id = int(boxes.cls[best_idx].item())
-        names = results[0].names
         raw_name = str(names[cls_id])
         waste = coco_class_name_to_waste_category(raw_name)
         xyxy_tensor = boxes.xyxy[best_idx]

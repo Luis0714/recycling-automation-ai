@@ -38,3 +38,7 @@ class Settings(BaseSettings):
     classifier_backend: Literal["stub", "yolo"] = "stub"
     yolo_model_path: str = "yolov8n.pt"
     yolo_confidence: float = Field(default=0.35, ge=0.0, le=1.0)
+    yolo_skip_classes: str = Field(
+        default="person",
+        description="Clases COCO a ignorar (coma-separadas, minusculas).",
+    )
