@@ -15,6 +15,10 @@ class ClassificationOutput(BaseModel):
     category: WasteCategory
     confidence: float = Field(ge=0.0, le=1.0)
     raw_label: str | None = None
+    bbox_xyxy: tuple[float, float, float, float] | None = Field(
+        default=None,
+        description="Caja delimitadora en pixeles (x1, y1, x2, y2) en la imagen capturada.",
+    )
 
 
 class CycleResult(BaseModel):

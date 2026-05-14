@@ -2,9 +2,10 @@
 pydantic>=2.7,<3
 pydantic-settings>=2.2,<3
 
-# Visión y hardware (descomenta cuando los integres en el pipeline)
-# opencv-python-headless>=4.9.0,<5
-# pyserial>=3.5,<4
+# Visión: opencv-python incluye ventanas (imshow) en Windows/macOS/Linux con escritorio.
+# Para servidores sin GUI usa --no-preview o instala solo opencv-python-headless (sin panel).
+opencv-python>=4.9.0,<5
+pyserial>=3.5,<4
 
-# IA — instala aparte cuando entrenes/inferencia; arrastra PyTorch (pesado)
-# ultralytics>=8.0.0
+# Detección / clasificación (instala Torch; primera ejecución puede descargar yolov8n.pt)
+ultralytics>=8.2.0,<9
