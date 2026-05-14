@@ -1,0 +1,10 @@
+# Recycling Automation System — dependencias base
+pydantic>=2.7,<3
+pydantic-settings>=2.2,<3
+
+# Visión y hardware (descomenta cuando los integres en el pipeline)
+# opencv-python-headless>=4.9.0,<5
+# pyserial>=3.5,<4
+
+# IA — instala aparte cuando entrenes/inferencia; arrastra PyTorch (pesado)
+# ultralytics>=8.0.0

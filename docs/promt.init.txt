@@ -1,0 +1,35 @@
+Actualmente me encuentro desarrollando un proyecto universitario de automatización enfocado en reciclaje inteligente. El objetivo general del proyecto es construir un sistema capaz de ayudar en la clasificación de residuos mediante automatización, visión artificial e interacción con el usuario.
+
+El proyecto completo estará dividido en dos partes principales:
+
+1. Un frontend web desarrollado en Next.js, encargado del juego educativo sobre reciclaje y de una funcionalidad manual donde el usuario podrá seleccionar visualmente el tipo de objeto que desea reciclar para que el sistema abra la caneca correspondiente.
+
+2. Un sistema desarrollado en Python llamado “Recycling Automation System”, encargado de toda la automatización inteligente del proyecto.
+
+Necesito ayuda específicamente con el segundo sistema, es decir, con el proyecto desarrollado en Python.
+
+Este sistema será el encargado de:
+
+* Comunicarse con Arduino mediante serial.
+* Escuchar eventos provenientes de sensores.
+* Activar una cámara utilizando OpenCV.
+* Capturar imágenes de objetos.
+* Procesar las imágenes mediante visión artificial e inteligencia artificial.
+* Identificar el tipo de objeto detectado.
+* Determinar la categoría del residuo.
+* Enviar comandos al Arduino para abrir automáticamente la caneca correspondiente mediante servomotores.
+
+El flujo general esperado es el siguiente:
+
+1. Un sensor de proximidad detecta que un objeto fue acercado.
+2. Arduino envía un evento al sistema en Python.
+3. El sistema activa la cámara.
+4. Se captura la imagen del objeto.
+5. El modelo de IA procesa la imagen.
+6. El sistema identifica la categoría del residuo.
+7. El sistema envía un comando serial al Arduino.
+8. Arduino abre la caneca correspondiente.
+
+Adicionalmente, durante las primeras etapas del desarrollo queremos simular la comunicación con Arduino y los sensores, dejando toda la arquitectura preparada para que posteriormente solo sea necesario reemplazar funciones simuladas por comunicación serial real.
+
+Quiero que tomes como contexto principal el documento adjunto o relacionado donde se explica en detalle el “Recycling Automation System”, ya que ese será el sistema sobre el cual necesito apoyo técnico, arquitectónico y de implementación.
