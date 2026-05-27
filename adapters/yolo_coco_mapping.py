@@ -1,5 +1,14 @@
 from domain.models import WasteCategory
 
+_CUSTOM_RECYCLING_MAPPING: dict[str, WasteCategory] = {
+    # Dataset custom esperado en model/best.pt
+    "metal": WasteCategory.METAL,
+    "glass": WasteCategory.PLASTIC,
+    "plastic": WasteCategory.PLASTIC,
+    "carton": WasteCategory.PLASTIC,
+    "medical": WasteCategory.UNKNOWN,
+}
+
 _COCO_PLASTIC: frozenset[str] = frozenset(
     {
         "bottle",
@@ -49,6 +58,9 @@ _COCO_ORGANIC: frozenset[str] = frozenset(
 
 def coco_class_name_to_waste_category(class_name: str) -> WasteCategory:
     key = class_name.strip().lower()
+    mapped_custom = _CUSTOM_RECYCLING_MAPPING.get(key)
+    if mapped_custom is not None:
+        return mapped_custom
     if key in _COCO_PLASTIC:
         return WasteCategory.PLASTIC
     if key in _COCO_METAL:

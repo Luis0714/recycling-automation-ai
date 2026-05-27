@@ -23,7 +23,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-En la primera ejecución con YOLO puede descargarse `yolov8n.pt` automáticamente.
+El clasificador usa por defecto `model/best.pt` (modelo custom del proyecto).
 
 Opcional: copia o edita `.env` (variables con prefijo `RAS_`). Ejemplo para Arduino:
 
@@ -96,7 +96,7 @@ python main.py --classifier yolo
 | Sin ventanas (servidor/CI) | `python main.py --camera opencv --classifier yolo --no-preview` |
 | Otra cámara (índice 1) | `python main.py --camera opencv --camera-index 1 --classifier yolo` |
 | Imagen fija en simulación | `python main.py --fixture ruta\imagen.jpg --classifier yolo` |
-| Ignorar clases YOLO (p. ej. persona) | `python main.py --camera opencv --classifier yolo --yolo-skip person` |
+| Ignorar clases YOLO | `python main.py --camera opencv --classifier yolo --yolo-skip person` |
 | Confianza YOLO | `python main.py --camera opencv --classifier yolo --yolo-conf 0.5` |
 | Confianza minima de categoria | `python main.py --camera opencv --classifier yolo --yolo-category-conf 0.45` |
 | Stub sin ML | `python main.py --classifier stub --category organic` |
@@ -121,16 +121,26 @@ Detener un bucle: **Ctrl+C**.
 | `RAS_CAMERA_DEVICE_INDEX` | Índice de webcam (default `0`) |
 | `RAS_CAMERA_PLACEMENT_PREVIEW_MS` | Segundos de vista previa para colocar objeto (default `5000`) |
 | `RAS_CLASSIFIER_BACKEND` | `stub` o `yolo` |
-| `RAS_YOLO_MODEL_PATH` | Modelo `.pt` (default `yolov8n.pt`) |
+| `RAS_YOLO_MODEL_PATH` | Modelo `.pt` (default `model/best.pt`) |
 | `RAS_YOLO_CONFIDENCE` | Umbral 0–1 (default `0.35`) |
 | `RAS_YOLO_CATEGORY_CONFIDENCE` | Umbral minimo para aceptar categoria final (default `0.45`) |
-| `RAS_YOLO_SKIP_CLASSES` | Clases COCO ignoradas (default `person`) |
+| `RAS_YOLO_SKIP_CLASSES` | Clases a ignorar (default vacío) |
 
 ## Mapeo actual a canecas (3 canecas)
 
 - `plastic` y `metal` -> `BLANCO` (aprovechables)
 - `organic` -> `VERDE` (organicos)
-- `unknown` -> `NEGRO` (no aprovechables)
+- `unknown` -> `NO_ACTION` (no abre ninguna caneca)
+
+## Dashboard de cámara
+
+- Fondo del layout de vista previa: `asset/dashboard.png`
+- Modelo custom usado por defecto: `model/best.pt`
+- Si no tienes imágenes por clase, el panel lateral muestra texto:
+  - clase detectada
+  - categoría
+  - confianza
+  - destino de caneca
 
 ## Ayuda CLI
 

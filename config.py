@@ -36,10 +36,10 @@ class Settings(BaseSettings):
     serial_timeout_s: float = Field(default=0.5, gt=0, le=30)
     serial_object_line: str = "DETECTED"
     classifier_backend: Literal["stub", "yolo"] = "stub"
-    yolo_model_path: str = "yolov8n.pt"
+    yolo_model_path: str = "model/best.pt"
     yolo_confidence: float = Field(default=0.35, ge=0.0, le=1.0)
     yolo_category_confidence: float = Field(default=0.45, ge=0.0, le=1.0)
     yolo_skip_classes: str = Field(
-        default="person",
+        default="",
         description="Clases COCO a ignorar (coma-separadas, minusculas).",
     )

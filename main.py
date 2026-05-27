@@ -148,7 +148,7 @@ def main() -> int:
         "--serial-baud",
         type=int,
         default=None,
-        help="Baudios (por defecto RAS_SERIAL_BAUDRATE, 115200).",
+        help="Baudios (por defecto RAS_SERIAL_BAUDRATE, 9600).",
     )
     parser.add_argument(
         "--skip-wait",
@@ -190,13 +190,13 @@ def main() -> int:
         "--classifier",
         choices=("stub", "yolo"),
         default=None,
-        help="stub: categoría fija (RAS_STUB_WASTE_CATEGORY / --category). yolo: YOLOv8 + mapeo COCO.",
+        help="stub: categoría fija (RAS_STUB_WASTE_CATEGORY / --category). yolo: YOLOv8 custom + fallback COCO.",
     )
     parser.add_argument(
         "--yolo-model",
         type=str,
         default=None,
-        help="Ruta o nombre del modelo (.pt). Por defecto RAS_YOLO_MODEL_PATH (yolov8n.pt).",
+        help="Ruta o nombre del modelo (.pt). Por defecto RAS_YOLO_MODEL_PATH (model/best.pt).",
     )
     parser.add_argument(
         "--yolo-conf",

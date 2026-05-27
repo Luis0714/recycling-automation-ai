@@ -15,7 +15,7 @@ def _parse_skip_class_names(raw: str) -> FrozenSet[str]:
 
 
 class YoloWasteClassifier:
-    """Clasificador de residuos con YOLOv8 (COCO) y mapeo heurístico a categorías de reciclaje."""
+    """Clasificador de residuos con YOLOv8 custom (best.pt) y fallback COCO."""
 
     def __init__(
         self,

@@ -5,6 +5,8 @@ pydantic-settings>=2.2,<3
 # Visión: opencv-python incluye ventanas (imshow) en Windows/macOS/Linux con escritorio.
 # Para servidores sin GUI usa --no-preview o instala solo opencv-python-headless (sin panel).
 opencv-python>=4.9.0,<5
+Pillow>=10.0,<12
+imutils>=0.5.4,<1
 pyserial>=3.5,<4
 
 # Detección / clasificación (instala Torch; primera ejecución puede descargar yolov8n.pt)

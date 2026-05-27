@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from domain.mapping import category_to_open_command
+from domain.mapping import NO_ACTION_COMMAND, category_to_open_command
 from domain.models import ClassificationOutput, CycleResult
 from ports.protocols import (
     ObjectDetectionSensor,
@@ -31,7 +31,8 @@ def run_automatic_cycle(
     classification = classifier.classify_waste(image_bytes)
     _notify_classification_preview_if_supported(camera, classification)
     command_sent = category_to_open_command(classification.category)
-    actuator.send_command(command_sent)
+    if command_sent != NO_ACTION_COMMAND:
+        actuator.send_command(command_sent)
     finished_at = datetime.now(UTC)
     duration_ms = int((finished_at - started_at).total_seconds() * 1000)
     return CycleResult(
