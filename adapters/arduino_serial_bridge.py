@@ -51,6 +51,7 @@ class ArduinoSerialBridge:
     def wait_until_object_detected(self) -> None:
         ser = self._open()
         needle = self._object_line
+        self._log.info("Esperando detección desde Arduino (evento: %s)...", needle)
         while True:
             raw = ser.readline()
             if not raw:

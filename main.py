@@ -110,7 +110,7 @@ def main() -> int:
     parser.add_argument(
         "--once",
         action="store_true",
-        help="Un solo ciclo y termina (prioridad sobre --continuous).",
+        help="Un solo ciclo y termina (prioridad sobre --continuous). En --sensor serial se ignora y sigue en espera.",
     )
     parser.add_argument(
         "--continuous",
@@ -265,16 +265,20 @@ def main() -> int:
         return 2
 
     try:
+        cycle_count = 0
         while True:
+            if sensor_mode == "serial":
+                _log.info("Sistema en espera de detección por serial...")
             result = run_automatic_cycle(
                 sensor=sensor,
                 camera=camera,
                 classifier=classifier,
                 actuator=actuator,
             )
+            cycle_count += 1
             print(result.model_dump_json(indent=2))
             camera.end_cycle_release_for_next_trigger()
-            if args.once:
+            if args.once and sensor_mode != "serial":
                 break
             should_continue = args.continuous or sensor_mode in ("enter", "serial")
             if not should_continue:
@@ -285,7 +289,8 @@ def main() -> int:
                 )
             elif sensor_mode == "serial":
                 _log.info(
-                    "Camara cerrada. Esperando la siguiente linea desde Arduino (p. ej. DETECTED)."
+                    "Ciclo #%s completado. Camara cerrada. Esperando la siguiente linea desde Arduino (p. ej. DETECTED).",
+                    cycle_count,
                 )
             else:
                 _log.info(
