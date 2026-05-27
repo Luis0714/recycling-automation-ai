@@ -32,9 +32,9 @@ class Settings(BaseSettings):
         description="Tiempo en vivo para colocar el objeto antes de capturar (0 = desactivado).",
     )
     serial_port: str | None = None
-    serial_baudrate: int = Field(default=115200, ge=1)
+    serial_baudrate: int = Field(default=9600, ge=1)
     serial_timeout_s: float = Field(default=0.5, gt=0, le=30)
-    serial_object_line: str = "OBJECT_DETECTED"
+    serial_object_line: str = "DETECTED"
     classifier_backend: Literal["stub", "yolo"] = "stub"
     yolo_model_path: str = "yolov8n.pt"
     yolo_confidence: float = Field(default=0.35, ge=0.0, le=1.0)

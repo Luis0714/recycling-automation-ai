@@ -5,7 +5,7 @@ from domain.models import ClassificationOutput
 
 class ObjectDetectionSensor(Protocol):
     def wait_until_object_detected(self) -> None:
-        """Bloquea hasta que exista un evento equivalente a OBJECT_DETECTED."""
+        """Bloquea hasta que exista un evento equivalente a DETECTED."""
 
 
 class WasteImageCapture(Protocol):
@@ -20,4 +20,4 @@ class WasteClassifier(Protocol):
 
 class SerialBinActuator(Protocol):
     def send_command(self, command: str) -> None:
-        """Envía línea de comando al Arduino (p. ej. OPEN_PLASTIC)."""
+        """Envía línea de comando al Arduino (p. ej. BLANCO)."""

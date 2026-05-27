@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 from adapters import (
+    ArduinoSerialBridge,
     ImmediateProximitySensor,
     LoggingBinActuator,
     SimulatedImageCapture,
@@ -16,11 +17,11 @@ from adapters import (
 from application.pipeline import run_automatic_cycle
 from config import Settings
 from domain.models import WasteCategory
+from ports.protocols import ObjectDetectionSensor, SerialBinActuator, WasteClassifier, WasteImageCapture
 
 if TYPE_CHECKING:
     from adapters.camera_opencv import OpenCvImageCapture
     from adapters.classifier_yolo import YoloWasteClassifier
-    from adapters.sensor_serial import SerialProximitySensor
 
 
 def _parse_category(value: str) -> WasteCategory:
@@ -51,31 +52,31 @@ def _build_dependencies(
     camera_backend: Literal["simulated", "opencv"],
     classifier_backend: Literal["stub", "yolo"],
 ) -> tuple[
-    SimulatedProximitySensor | ImmediateProximitySensor | SerialProximitySensor,
-    SimulatedImageCapture | OpenCvImageCapture,
-    StubWasteClassifier | YoloWasteClassifier,
-    LoggingBinActuator,
+    ObjectDetectionSensor,
+    WasteImageCapture,
+    WasteClassifier,
+    SerialBinActuator,
 ]:
     if sensor_mode == "serial":
-        from adapters.sensor_serial import SerialProximitySensor
-
         if not settings.serial_port or not str(settings.serial_port).strip():
             raise ValueError(
                 "Modo --sensor serial: hace falta un puerto (RAS_SERIAL_PORT en .env o --serial-port COMx). "
                 "Si aun no tienes Arduino, no uses serial: ejecuta sin --sensor (ENTER) o --sensor immediate."
             )
-        sensor: (
-            SimulatedProximitySensor | ImmediateProximitySensor | SerialProximitySensor
-        ) = SerialProximitySensor(
+        arduino_bridge = ArduinoSerialBridge(
             settings.serial_port,
             settings.serial_baudrate,
             object_line=settings.serial_object_line,
             timeout_s=settings.serial_timeout_s,
         )
+        sensor: ObjectDetectionSensor = arduino_bridge
+        actuator: SerialBinActuator = arduino_bridge
     elif sensor_mode == "immediate":
         sensor = ImmediateProximitySensor()
+        actuator = LoggingBinActuator()
     else:
         sensor = SimulatedProximitySensor(prompt=settings.simulated_sensor_prompt)
+        actuator = LoggingBinActuator()
     if camera_backend == "opencv":
         from adapters.camera_opencv import OpenCvImageCapture
 
@@ -98,7 +99,6 @@ def _build_dependencies(
         )
     else:
         classifier = StubWasteClassifier(category=settings.stub_waste_category)
-    actuator = LoggingBinActuator()
     return sensor, camera, classifier, actuator
 
 
@@ -285,7 +285,7 @@ def main() -> int:
                 )
             elif sensor_mode == "serial":
                 _log.info(
-                    "Camara cerrada. Esperando la siguiente linea desde Arduino (p. ej. OBJECT_DETECTED)."
+                    "Camara cerrada. Esperando la siguiente linea desde Arduino (p. ej. DETECTED)."
                 )
             else:
                 _log.info(

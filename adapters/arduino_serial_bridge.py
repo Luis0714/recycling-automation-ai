@@ -3,8 +3,8 @@ import logging
 import serial
 
 
-class SerialProximitySensor:
-    """Espera la línea acordada (p. ej. DETECTED) desde Arduino por serial."""
+class ArduinoSerialBridge:
+    """Adaptador serial bidireccional: sensor (lectura) + actuador (escritura)."""
 
     def __init__(
         self,
@@ -19,7 +19,7 @@ class SerialProximitySensor:
         self._object_line = object_line.strip()
         self._timeout_s = timeout_s
         self._ser: serial.Serial | None = None
-        self._log = logging.getLogger("ras.serial_sensor")
+        self._log = logging.getLogger("ras.arduino_serial")
 
     def _open(self) -> serial.Serial:
         if self._ser is not None and self._ser.is_open:
@@ -61,6 +61,16 @@ class SerialProximitySensor:
             if line == needle or needle in line:
                 self._log.info("Evento recibido: %s", line)
                 return
+
+    def send_command(self, command: str) -> None:
+        normalized_command = command.strip()
+        if not normalized_command:
+            raise ValueError("El comando serial no puede estar vacío.")
+        ser = self._open()
+        payload = f"{normalized_command}\n".encode("utf-8")
+        ser.write(payload)
+        ser.flush()
+        self._log.info("Comando enviado al Arduino: %s", normalized_command)
 
     def release(self) -> None:
         if self._ser is None:
