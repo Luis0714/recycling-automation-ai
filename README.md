@@ -98,6 +98,7 @@ python main.py --classifier yolo
 | Imagen fija en simulación | `python main.py --fixture ruta\imagen.jpg --classifier yolo` |
 | Ignorar clases YOLO (p. ej. persona) | `python main.py --camera opencv --classifier yolo --yolo-skip person` |
 | Confianza YOLO | `python main.py --camera opencv --classifier yolo --yolo-conf 0.5` |
+| Confianza minima de categoria | `python main.py --camera opencv --classifier yolo --yolo-category-conf 0.45` |
 | Stub sin ML | `python main.py --classifier stub --category organic` |
 
 Detener un bucle: **Ctrl+C**.
@@ -122,7 +123,14 @@ Detener un bucle: **Ctrl+C**.
 | `RAS_CLASSIFIER_BACKEND` | `stub` o `yolo` |
 | `RAS_YOLO_MODEL_PATH` | Modelo `.pt` (default `yolov8n.pt`) |
 | `RAS_YOLO_CONFIDENCE` | Umbral 0–1 (default `0.35`) |
+| `RAS_YOLO_CATEGORY_CONFIDENCE` | Umbral minimo para aceptar categoria final (default `0.45`) |
 | `RAS_YOLO_SKIP_CLASSES` | Clases COCO ignoradas (default `person`) |
+
+## Mapeo actual a canecas (3 canecas)
+
+- `plastic` y `metal` -> `BLANCO` (aprovechables)
+- `organic` -> `VERDE` (organicos)
+- `unknown` -> `NEGRO` (no aprovechables)
 
 ## Ayuda CLI
 
@@ -147,4 +155,4 @@ Sin Arduino, ciclos continuos:
 python main.py --sensor immediate --continuous --camera opencv --classifier yolo
 
 Con Arduino:
-python main.py --sensor serial --serial-port COM3 --serial-baud 9600 --camera opencv --classifier yolo
+python main.py --sensor serial --serial-port COM4 --serial-baud 9600 --camera opencv --classifier yolo

@@ -7,6 +7,18 @@ _COCO_PLASTIC: frozenset[str] = frozenset(
         "wine glass",
         "bowl",
         "toothbrush",
+        "book",
+        "cell phone",
+        "remote",
+        "mouse",
+        "keyboard",
+        "laptop",
+        "tv",
+        "microwave",
+        "oven",
+        "toaster",
+        "refrigerator",
+        "sink",
     }
 )
 _COCO_METAL: frozenset[str] = frozenset(
@@ -30,6 +42,7 @@ _COCO_ORGANIC: frozenset[str] = frozenset(
         "pizza",
         "donut",
         "cake",
+        "potted plant",
     }
 )
 

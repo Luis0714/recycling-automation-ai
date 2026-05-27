@@ -95,6 +95,7 @@ def _build_dependencies(
         classifier: StubWasteClassifier | YoloWasteClassifier = YoloWasteClassifier(
             settings.yolo_model_path,
             confidence_threshold=settings.yolo_confidence,
+            category_confidence_threshold=settings.yolo_category_confidence,
             skip_class_names=settings.yolo_skip_classes,
         )
     else:
@@ -204,6 +205,13 @@ def main() -> int:
         help="Umbral de confianza YOLO (0-1). Por defecto RAS_YOLO_CONFIDENCE.",
     )
     parser.add_argument(
+        "--yolo-category-conf",
+        type=float,
+        default=None,
+        help="Umbral minimo de confianza para aceptar la categoria final (0-1). "
+        "Por defecto RAS_YOLO_CATEGORY_CONFIDENCE.",
+    )
+    parser.add_argument(
         "--yolo-skip",
         type=str,
         default=None,
@@ -234,6 +242,10 @@ def main() -> int:
         settings = settings.model_copy(update={"yolo_model_path": args.yolo_model})
     if args.yolo_conf is not None:
         settings = settings.model_copy(update={"yolo_confidence": args.yolo_conf})
+    if args.yolo_category_conf is not None:
+        settings = settings.model_copy(
+            update={"yolo_category_confidence": args.yolo_category_conf}
+        )
     if args.yolo_skip is not None:
         settings = settings.model_copy(update={"yolo_skip_classes": args.yolo_skip})
 
