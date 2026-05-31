@@ -10,7 +10,7 @@ from tkinter import Label, Tk
 _log = logging.getLogger("ras.camera_tkinter")
 _DEFAULT_FRAME_WIDTH = 1280
 _DEFAULT_FRAME_HEIGHT = 720
-_DEFAULT_MAX_DISPLAY_WIDTH = 640
+_DEFAULT_MAX_DISPLAY_WIDTH = 840
 _DEFAULT_UPDATE_INTERVAL_MS = 10
 
 
