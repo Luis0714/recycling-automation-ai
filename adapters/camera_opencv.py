@@ -12,13 +12,13 @@ _PREVIEW_WINDOW = "RAS - Vista de camara"
 _DASHBOARD_PATH = Path("asset/dashboard.png")
 _FEED_TOP_LEFT = (20, 80)
 _FEED_SIZE = (980, 560)  # width, height
-_CLASS_BLOCK_POS = (1048, 168)
-_CLASS_BLOCK_LINE_HEIGHT = 40
-_CONF_BLOCK_POS = (1048, 338)
-_INFO_BLOCK_POS = (1038, 428)
-_INFO_BLOCK_LINE_HEIGHT = 42
-_HISTORY_BLOCK_POS = (1038, 700)
-_HISTORY_BLOCK_LINE_HEIGHT = 34
+_CLASS_BLOCK_POS = (1060, 190)
+_CLASS_BLOCK_LINE_HEIGHT = 34
+_CONF_BLOCK_POS = (1125, 330)
+_INFO_BLOCK_POS = (1062, 462)
+_INFO_BLOCK_LINE_HEIGHT = 34
+_HISTORY_BLOCK_POS = (1062, 718)
+_HISTORY_BLOCK_LINE_HEIGHT = 28
 
 
 def _draw_bbox_clamped(
@@ -138,32 +138,35 @@ class OpenCvImageCapture:
         feed = cv2.resize(feed, (feed_w, feed_h), interpolation=cv2.INTER_AREA)
         dashboard[feed_y : feed_y + feed_h, feed_x : feed_x + feed_w] = feed
 
-        status_line = lines[0] if len(lines) > 0 else "Estado: --"
-        class_line = lines[1] if len(lines) > 1 else "Clase detectada: --"
-        category_line = lines[2] if len(lines) > 2 else "Categoria: --"
-        confidence_line = lines[3] if len(lines) > 3 else "Confianza: --%"
-        destination_line = lines[4] if len(lines) > 4 else "Destino: --"
-        history_line = lines[5] if len(lines) > 5 else "Historial: esperando deteccion..."
+        status_line = lines[0] if len(lines) > 0 else "--"
+        class_line = lines[1] if len(lines) > 1 else "--"
+        category_line = lines[2] if len(lines) > 2 else "--"
+        confidence_line = lines[3] if len(lines) > 3 else "--%"
+        destination_line = lines[4] if len(lines) > 4 else "--"
+        history_line = lines[5] if len(lines) > 5 else "Esperando deteccion"
 
         _draw_dashboard_text(
             dashboard,
             class_line,
             _CLASS_BLOCK_POS,
-            font_scale=0.65,
+            font_scale=0.54,
+            thickness=1,
         )
         _draw_dashboard_text(
             dashboard,
             category_line,
             (_CLASS_BLOCK_POS[0], _CLASS_BLOCK_POS[1] + _CLASS_BLOCK_LINE_HEIGHT),
-            font_scale=0.6,
+            font_scale=0.52,
             color=(180, 225, 255),
+            thickness=1,
         )
 
         _draw_dashboard_text(
             dashboard,
             confidence_line,
             _CONF_BLOCK_POS,
-            font_scale=0.72,
+            font_scale=0.62,
+            thickness=1,
         )
 
         info_lines = (
@@ -177,8 +180,9 @@ class OpenCvImageCapture:
                 dashboard,
                 info_line,
                 (_INFO_BLOCK_POS[0], _INFO_BLOCK_POS[1] + index * _INFO_BLOCK_LINE_HEIGHT),
-                font_scale=0.58,
+                font_scale=0.5,
                 color=(205, 225, 245),
+                thickness=1,
             )
 
         history_lines = (
@@ -190,7 +194,7 @@ class OpenCvImageCapture:
                 dashboard,
                 history_text,
                 (_HISTORY_BLOCK_POS[0], _HISTORY_BLOCK_POS[1] + index * _HISTORY_BLOCK_LINE_HEIGHT),
-                font_scale=0.5,
+                font_scale=0.46,
                 color=(175, 205, 235),
                 thickness=1,
             )
@@ -231,12 +235,12 @@ class OpenCvImageCapture:
             remaining_s = max(0.0, end - time.monotonic())
             sec_left = max(0, int(math.ceil(remaining_s)))
             lines = (
-                "Estado: Colocando objeto",
-                "Clase detectada: --",
-                "Categoria: --",
-                "Confianza: --%",
-                f"Destino: Esperando captura ({sec_left}s)",
-                "Historial: vista previa activa (ESC para capturar)",
+                "Colocando objeto",
+                "--",
+                "--",
+                "--%",
+                f"Captura en {sec_left}s",
+                "Vista previa activa",
             )
             vis = self._compose_dashboard_frame(frame, lines, None)
             try:
@@ -279,11 +283,11 @@ class OpenCvImageCapture:
             frame_bgr,
             (
                 "Estado: Reconociendo objeto...",
-                "Clase detectada: --",
-                "Categoria: --",
-                "Confianza: --%",
-                "Destino: Evaluando",
-                "Historial: inferencia en progreso",
+                "--",
+                "--",
+                "--%",
+                "Evaluando",
+                "Inferencia en progreso",
             ),
             None,
         )
@@ -298,12 +302,12 @@ class OpenCvImageCapture:
             "unknown": "SIN APERTURA",
         }.get(classification.category.value, "SIN APERTURA")
         lines: list[str] = [
-            "Estado: Clasificacion lista",
-            f"Clase detectada: {classification.raw_label or '--'}",
-            f"Categoria: {classification.category.value}",
-            f"Confianza: {classification.confidence:.0%}",
-            f"Destino: {destino}",
-            "Historial: ultima deteccion completada",
+            "Clasificacion lista",
+            (classification.raw_label or "--")[:22],
+            classification.category.value,
+            f"{classification.confidence:.0%}",
+            destino,
+            "Ultima deteccion completada",
         ]
         self._pump_preview(self._last_bgr, tuple(lines), classification.bbox_xyxy)
         if self._preview_gui_broken:
@@ -337,11 +341,11 @@ class OpenCvImageCapture:
                     frame,
                     (
                         "Estado: Capturando frame...",
-                        "Clase detectada: --",
-                        "Categoria: --",
-                        "Confianza: --%",
-                        "Destino: Pendiente",
-                        "Historial: captura en curso",
+                        "--",
+                        "--",
+                        "--%",
+                        "Pendiente",
+                        "Captura en curso",
                     ),
                     None,
                 )

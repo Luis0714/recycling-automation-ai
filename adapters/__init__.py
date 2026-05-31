@@ -1,17 +1,11 @@
-from adapters.actuator_logging import LoggingBinActuator
 from adapters.arduino_serial_bridge import ArduinoSerialBridge
-from adapters.camera_simulated import SimulatedImageCapture
-from adapters.classifier_stub import StubWasteClassifier
-from adapters.sensor_simulated import (
-    ImmediateProximitySensor,
-    SimulatedProximitySensor,
-)
+from adapters.camera_opencv import OpenCvImageCapture
+from adapters.classifier_yolo import YoloWasteClassifier
+from adapters.ui_tkinter import RecyclingTkWindow
 
 __all__ = [
-    "SimulatedProximitySensor",
-    "ImmediateProximitySensor",
-    "SimulatedImageCapture",
-    "StubWasteClassifier",
-    "LoggingBinActuator",
     "ArduinoSerialBridge",
+    "OpenCvImageCapture",
+    "RecyclingTkWindow",
+    "YoloWasteClassifier",
 ]
