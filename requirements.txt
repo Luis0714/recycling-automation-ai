@@ -1,15 +1,10 @@
 # Recycling Automation System — dependencias base
 pydantic>=2.7,<3
-pydantic-settings>=2.2,<3
 
 # GUI: tkinter viene con Python (en Linux puede requerir python3-tk del sistema).
 # Pillow convierte frames OpenCV/numpy a PhotoImage para los Label de Tkinter.
 Pillow>=10.3.0,<12
 
-# Visión: opencv-python incluye ventanas (imshow) en Windows/macOS/Linux con escritorio.
-# Para servidores sin GUI usa --no-preview o instala solo opencv-python-headless (sin panel).
+# Visión: captura de cámara y procesamiento de frames.
 opencv-python>=4.9.0,<5
 pyserial>=3.5,<4
-
-# Detección / clasificación (instala Torch; primera ejecución puede descargar yolov8n.pt)
-ultralytics>=8.2.0,<9
