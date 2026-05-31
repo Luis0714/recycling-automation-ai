@@ -10,8 +10,8 @@ _SCREEN_MARGIN_PX = 48
 _TASKBAR_RESERVE_PX = 64
 _VIDEO_LABEL_POS = (54, 210)
 _DETECTION_IMAGE_POS = (1100, 580)
-_CLASSIFICATION_TEXT_POS = (1180, 280)
-_CONFIDENCE_TEXT_POS = (1180, 430)
+_CLASSIFICATION_TEXT_POS = (1280, 300)
+_CONFIDENCE_TEXT_POS = (1280, 700)
 _VIDEO_DISPLAY_MAX_WIDTH = 1044
 
 
@@ -104,6 +104,24 @@ class RecyclingTkWindow:
     @property
     def confidence_label(self) -> Label:
         return self._confidence_label or self.root
+
+    def set_detection(
+        self,
+        display_category: str,
+        confidence_percent: int,
+        *,
+        arduino_command: str | None = None,
+    ) -> None:
+        self.classification_label.config(text=display_category)
+        confidence_text = f"{confidence_percent}%"
+        if arduino_command:
+            confidence_text = f"{confidence_percent}% · {arduino_command}"
+        self.confidence_label.config(text=confidence_text)
+
+    def clear_detection(self) -> None:
+        self.classification_label.config(text="")
+        self.confidence_label.config(text="")
+        self.detection_label.configure(image="")
 
     def run(
         self,

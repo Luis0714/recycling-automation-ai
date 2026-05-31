@@ -1,10 +1,18 @@
-# Recycling Automation System — dependencias base
-pydantic>=2.7,<3
-
-# GUI: tkinter viene con Python (en Linux puede requerir python3-tk del sistema).
+# GUI: tkinter viene con Python (en Linux: paquete python3-tk del sistema).
 # Pillow convierte frames OpenCV/numpy a PhotoImage para los Label de Tkinter.
 Pillow>=10.3.0,<12
 
-# Visión: captura de cámara y procesamiento de frames.
+# Cámara y procesamiento de imagen.
 opencv-python>=4.9.0,<5
+numpy>=1.26.0,<3
+
+# YOLO en vivo (model/best.pt). Instala torch como dependencia transitiva.
+ultralytics>=8.2.0,<9
+
+# Arduino (HC-SR04 + servos). Opcional: solo si conectas el puerto serial.
 pyserial>=3.5,<4
+
+# torch — requerido por ultralytics y usado para detectar CUDA en scanning_tkinter.
+# pip install -r requirements.txt instala torch CPU por defecto.
+# Para GPU NVIDIA, después ejecuta (ejemplo CUDA 12.1):
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
