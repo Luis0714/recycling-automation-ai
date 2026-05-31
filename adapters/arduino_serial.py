@@ -5,6 +5,9 @@ from collections.abc import Callable
 _log = logging.getLogger("ras.arduino")
 
 OnObjectDetected = Callable[[], None]
+OnDepositComplete = Callable[[], None]
+
+VALID_ARDUINO_COMMANDS = frozenset({"BLANCO", "NEGRO", "VERDE", "ROJO"})
 
 
 class ArduinoSerialBridge:
@@ -16,6 +19,7 @@ class ArduinoSerialBridge:
         port: str,
         baudrate: int = 9600,
         on_detected: OnObjectDetected,
+        on_deposit_complete: OnDepositComplete | None = None,
         timeout_s: float = 1.0,
     ) -> None:
         if not port.strip():
@@ -24,6 +28,7 @@ class ArduinoSerialBridge:
         self._port = port.strip()
         self._baudrate = baudrate
         self._on_detected = on_detected
+        self._on_deposit_complete = on_deposit_complete
         self._timeout_s = timeout_s
         self._serial = None
         self._reader_thread: threading.Thread | None = None
@@ -66,9 +71,18 @@ class ArduinoSerialBridge:
     def send_command(self, command: str) -> None:
         if self._serial is None or not self._serial.is_open:
             raise RuntimeError("Serial no está conectado.")
-        payload = f"{command.strip()}\n".encode("ascii")
+
+        normalized = command.strip().upper()
+        if normalized not in VALID_ARDUINO_COMMANDS:
+            raise ValueError(
+                f"Comando inválido para Arduino: {command!r}. "
+                f"Use uno de: {sorted(VALID_ARDUINO_COMMANDS)}"
+            )
+
+        payload = f"{normalized}\n".encode("ascii")
         self._serial.write(payload)
-        _log.info("Enviado a Arduino: %s", command.strip())
+        self._serial.flush()
+        _log.info("Enviado a Arduino: %s", normalized)
 
     def _read_loop(self) -> None:
         while self._is_running and self._serial is not None and self._serial.is_open:
@@ -93,7 +107,7 @@ class ArduinoSerialBridge:
             return
 
         if line == "DETECTED":
-            _log.info("Arduino detectó objeto — activando cámara")
+            _log.info("Arduino detectó objeto")
             self._on_detected()
             return
 
@@ -102,7 +116,9 @@ class ArduinoSerialBridge:
             return
 
         if line.startswith("DEPOSITO_COMPLETO:"):
-            _log.info("Depósito completo — listo para próxima detección")
+            _log.info("Depósito completo: %s", line.split(":", maxsplit=1)[-1])
+            if self._on_deposit_complete is not None:
+                self._on_deposit_complete()
             return
 
         if line.startswith("ERROR:"):

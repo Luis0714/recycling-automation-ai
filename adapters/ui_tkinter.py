@@ -123,10 +123,25 @@ class RecyclingTkWindow:
         self.confidence_label.config(text="")
         self.detection_label.configure(image="")
 
+    def clear_video(self) -> None:
+        if self._video_label is not None:
+            self._video_label.configure(image="")
+
+    def show(self) -> None:
+        self.root.deiconify()
+        self.root.lift()
+        self.root.focus_force()
+
+    def hide(self) -> None:
+        self.clear_video()
+        self.clear_detection()
+        self.root.withdraw()
+
     def run(
         self,
         *,
         on_ready: Callable[["RecyclingTkWindow"], None] | None = None,
+        start_hidden: bool = False,
     ) -> None:
         """Crea la ventana, monta el layout base y entra en mainloop()."""
         root = Tk()
@@ -137,6 +152,9 @@ class RecyclingTkWindow:
         self._mount_background(root)
         self._mount_content_labels(root)
         _fit_window_to_content(root, self._content_width, self._content_height)
+
+        if start_hidden:
+            root.withdraw()
 
         if on_ready is not None:
             on_ready(self)

@@ -22,24 +22,33 @@ ARDUINO_COMMANDS: tuple[ArduinoCommand, ...] = (
 
 @dataclass(frozen=True)
 class WasteCategoryMapping:
+    class_id: int
     model_name: str
     display_category: DisplayCategory
     arduino_command: ArduinoCommand
 
 
-# Clases de model/best.pt → UI (3 categorías) + caneca Arduino (4 colores).
-# Arduino: BLANCO=plástico/envases, NEGRO=residuo general, VERDE=orgánico/vidrio, ROJO=peligroso.
+# model/best.pt — ids 0..4
+# Arduino: BLANCO=plástico/envases | NEGRO=residuo general | VERDE=orgánico/vidrio | ROJO=peligroso
 WASTE_CATEGORY_MAPPINGS: tuple[WasteCategoryMapping, ...] = (
-    WasteCategoryMapping("Plastic", "Aprovechables", "BLANCO"),
-    WasteCategoryMapping("Metal", "Aprovechables", "BLANCO"),
-    WasteCategoryMapping("Carton", "Aprovechables", "BLANCO"),
-    WasteCategoryMapping("Glass", "Aprovechables", "VERDE"),
-    WasteCategoryMapping("Medical", "No aprovechables", "ROJO"),
+    WasteCategoryMapping(0, "Metal", "Aprovechables", "BLANCO"),
+    WasteCategoryMapping(1, "Glass", "Orgánicos", "VERDE"),
+    WasteCategoryMapping(2, "Plastic", "Aprovechables", "BLANCO"),
+    WasteCategoryMapping(3, "Carton", "Aprovechables", "BLANCO"),
+    WasteCategoryMapping(4, "Medical", "No aprovechables", "ROJO"),
 )
+
+WASTE_MAPPING_BY_CLASS_ID: dict[int, WasteCategoryMapping] = {
+    mapping.class_id: mapping for mapping in WASTE_CATEGORY_MAPPINGS
+}
 
 WASTE_MAPPING_BY_MODEL_NAME: dict[str, WasteCategoryMapping] = {
     mapping.model_name: mapping for mapping in WASTE_CATEGORY_MAPPINGS
 }
+
+
+def resolve_waste_mapping_by_id(class_id: int) -> WasteCategoryMapping | None:
+    return WASTE_MAPPING_BY_CLASS_ID.get(class_id)
 
 
 def resolve_waste_mapping(model_class_name: str) -> WasteCategoryMapping | None:
@@ -65,4 +74,9 @@ def to_display_category(model_class_name: str) -> str | None:
 
 def to_arduino_command(model_class_name: str) -> ArduinoCommand | None:
     mapping = resolve_waste_mapping(model_class_name)
+    return mapping.arduino_command if mapping else None
+
+
+def to_arduino_command_by_id(class_id: int) -> ArduinoCommand | None:
+    mapping = resolve_waste_mapping_by_id(class_id)
     return mapping.arduino_command if mapping else None
