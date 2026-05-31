@@ -11,7 +11,8 @@ from PIL import Image, ImageTk
 from tkinter import Label, Tk
 from ultralytics import YOLO
 
-from domain.waste_classes import WASTE_CLASS_BY_ID, _DEFAULT_MODEL_PATH
+from domain.model_loader import resolve_yolo_model_path
+from domain.waste_classes import WASTE_CLASS_BY_ID
 from domain.waste_mapping import resolve_waste_mapping_by_id
 
 _log = logging.getLogger("ras.scanning")
@@ -150,13 +151,12 @@ class TkinterYoloScanner:
         video_label: Label,
         root: Tk,
         on_result: OnScanResult,
-        model_path: str | Path = _DEFAULT_MODEL_PATH,
+        model_path: str | Path | None = None,
         device_index: int = 0,
         display_width: int = _DISPLAY_WIDTH,
         yolo_device: str | int | None = None,
     ) -> None:
-        if not Path(model_path).is_file():
-            raise FileNotFoundError(f"No se encontró el modelo YOLO: {model_path}")
+        resolved_model_path = resolve_yolo_model_path(model_path)
 
         self._video_label = video_label
         self._root = root
@@ -164,7 +164,7 @@ class TkinterYoloScanner:
         self._device_index = device_index
         self._display_width = display_width
         self._yolo_device = _resolve_yolo_device(yolo_device)
-        self._model = YOLO(str(model_path))
+        self._model = YOLO(str(resolved_model_path))
         self._photo_ref: ImageTk.PhotoImage | None = None
         self._is_running = False
         self._is_scanning = False
@@ -177,7 +177,7 @@ class TkinterYoloScanner:
         self._scan_last_detections: list[_FrameDetection] = []
         self._scan_class_scores: dict[int, float] = {}
         self._scan_class_peak_confidence: dict[int, float] = {}
-        _log.info("Modelo YOLO cargado: %s", model_path)
+        _log.info("Modelo YOLO cargado: %s", resolved_model_path)
         _log.info("Clases del modelo: %s", self._model.names)
         _log_yolo_device(self._yolo_device)
         _log.info("Cámara inactiva — esperando DETECTED del Arduino")
@@ -451,7 +451,7 @@ class TkinterYoloScanner:
 def attach_yolo_scanner(
     window: object,
     *,
-    model_path: str | Path = _DEFAULT_MODEL_PATH,
+    model_path: str | Path | None = None,
     device_index: int = 0,
     display_width: int = _DISPLAY_WIDTH,
     yolo_device: str | int | None = None,

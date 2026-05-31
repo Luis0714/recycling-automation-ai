@@ -10,7 +10,9 @@ from adapters.ui_tkinter import RecyclingTkWindow
 _log = logging.getLogger("ras.main")
 
 _CAMERA_DEVICE_INDEX = 0
-_YOLO_MODEL_PATH = "model/best.pt"
+# Local: model/yolov8n-waste-12cls-best.pt (kendrickfff/waste-classification-yolov8-ken)
+# HF: kendrickfff/waste-classification-yolov8-ken
+_YOLO_MODEL_PATH: str | None = "model/yolov8n-waste-12cls-best.pt"
 _YOLO_DEVICE = None
 # Cambia al puerto de tu Arduino (Administrador de dispositivos → Puertos COM).
 # También puedes usar la variable de entorno RAS_SERIAL_PORT.

@@ -1,4 +1,4 @@
-"""Mapeo: clases del modelo YOLO → categoría de UI y comando Arduino."""
+"""Mapeo: clases YOLO waste-classification-yolov8-ken → UI y Arduino."""
 
 from dataclasses import dataclass
 from typing import Literal
@@ -28,14 +28,21 @@ class WasteCategoryMapping:
     arduino_command: ArduinoCommand
 
 
-# model/best.pt — ids 0..4
-# Arduino: BLANCO=plástico/envases | NEGRO=residuo general | VERDE=orgánico/vidrio | ROJO=peligroso
+# kendrickfff/waste-classification-yolov8-ken — 12 clases
+# Arduino: BLANCO=envases | NEGRO=residuo general | VERDE=orgánico/vidrio | ROJO=peligroso
 WASTE_CATEGORY_MAPPINGS: tuple[WasteCategoryMapping, ...] = (
-    WasteCategoryMapping(0, "Metal", "Aprovechables", "BLANCO"),
-    WasteCategoryMapping(1, "Glass", "Orgánicos", "VERDE"),
-    WasteCategoryMapping(2, "Plastic", "Aprovechables", "BLANCO"),
-    WasteCategoryMapping(3, "Carton", "Aprovechables", "BLANCO"),
-    WasteCategoryMapping(4, "Medical", "No aprovechables", "ROJO"),
+    WasteCategoryMapping(0, "battery", "No aprovechables", "ROJO"),
+    WasteCategoryMapping(1, "biological", "Orgánicos", "VERDE"),
+    WasteCategoryMapping(2, "brown-glass", "Orgánicos", "VERDE"),
+    WasteCategoryMapping(3, "cardboard", "Aprovechables", "BLANCO"),
+    WasteCategoryMapping(4, "clothes", "No aprovechables", "NEGRO"),
+    WasteCategoryMapping(5, "green-glass", "Orgánicos", "VERDE"),
+    WasteCategoryMapping(6, "metal", "Aprovechables", "BLANCO"),
+    WasteCategoryMapping(7, "paper", "Aprovechables", "BLANCO"),
+    WasteCategoryMapping(8, "plastic", "Aprovechables", "BLANCO"),
+    WasteCategoryMapping(9, "shoes", "No aprovechables", "NEGRO"),
+    WasteCategoryMapping(10, "trash", "No aprovechables", "NEGRO"),
+    WasteCategoryMapping(11, "white-glass", "Orgánicos", "VERDE"),
 )
 
 WASTE_MAPPING_BY_CLASS_ID: dict[int, WasteCategoryMapping] = {
