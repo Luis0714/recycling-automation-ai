@@ -29,7 +29,11 @@ OnScanResult = Callable[
     [str | None, int | None, str | None, str | None],
     None,
 ]
-OnScanComplete = Callable[[str | None], None]
+# Antes: Callable[[str | None], None]
+# Ahora: el callback recibe la mejor detección (o None) para que la capa
+# de orquestación pueda persistir el evento completo (clase, confianza,
+# categoría mapeada, comando Arduino, tiempo de procesamiento).
+OnScanComplete = Callable[["BestDetection | None"], None]
 
 
 @dataclass
@@ -47,12 +51,26 @@ class _FrameDetection:
 
 
 @dataclass
-class _BestDetection:
+class BestDetection:
+    """Snapshot público de la mejor detección de un ciclo de escaneo."""
+
     class_id: int
     model_class_name: str
     confidence_percent: int
     display_category: str
     arduino_command: str
+    started_at: float = 0.0
+    finished_at: float = 0.0
+
+    @property
+    def processing_time_ms(self) -> int:
+        if not self.started_at or not self.finished_at:
+            return 0
+        return int((self.finished_at - self.started_at) * 1000)
+
+
+# Mantener alias para no romper imports existentes.
+_BestDetection = BestDetection
 
 
 def _resolve_yolo_device(yolo_device: str | int | None) -> str | int:
@@ -222,7 +240,7 @@ class TkinterYoloScanner:
             self._scan_tick()
         except Exception as exc:
             _log.error("Error iniciando escaneo: %s", exc)
-            self._finish_scan_session(arduino_command=None)
+            self._finish_scan_session()
 
     def _warmup_capture(self, capture: cv2.VideoCapture) -> None:
         for _ in range(_WARMUP_FRAMES):
@@ -248,11 +266,7 @@ class TkinterYoloScanner:
         elapsed_s = time.monotonic() - self._scan_started_at
         if elapsed_s >= _SCAN_DURATION_S:
             self._finalize_best_from_votes()
-            self._finish_scan_session(
-                arduino_command=(
-                    self._scan_best.arduino_command if self._scan_best else None
-                ),
-            )
+            self._finish_scan_session()
             return
 
         has_frame, frame_bgr = self._scan_capture.read()
@@ -279,11 +293,12 @@ class TkinterYoloScanner:
             return
         self._scan_job = self._root.after(_SCAN_TICK_MS, self._scan_tick)
 
-    def _finish_scan_session(self, *, arduino_command: str | None) -> None:
+    def _finish_scan_session(self) -> None:
         self._cancel_scan_job()
         self._close_scan_capture()
         self._is_scanning = False
 
+        best_snapshot: BestDetection | None = None
         if self._scan_best is not None:
             best = self._scan_best
             self._on_result(
@@ -303,7 +318,7 @@ class TkinterYoloScanner:
                     if resolve_waste_mapping_by_id(class_id) is not None
                 },
             )
-            arduino_command = best.arduino_command
+            best_snapshot = best
         else:
             self._clear_detection_state()
             _log.warning("YOLO no detectó ningún objeto en %.0f s", _SCAN_DURATION_S)
@@ -312,7 +327,7 @@ class TkinterYoloScanner:
         on_complete = self._scan_on_complete
         self._scan_on_complete = None
         if on_complete is not None:
-            on_complete(arduino_command)
+            on_complete(best_snapshot)
 
         _log.info("Esperando próxima detección Arduino")
 
@@ -421,6 +436,8 @@ class TkinterYoloScanner:
             confidence_percent=int(peak_confidence * 100),
             display_category=category_mapping.display_category,
             arduino_command=category_mapping.arduino_command,
+            started_at=self._scan_started_at,
+            finished_at=time.monotonic(),
         )
 
     def _update_live_result(self) -> None:

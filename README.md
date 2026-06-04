@@ -1,168 +1,159 @@
-# Recycling Automation System (AI)
+# Smart Recycling — Python (AI + Arduino)
 
-Pipeline en Python: sensor de proximidad → captura de imagen → clasificación de residuo → comando a la caneca (simulado por consola).
+Sistema de clasificación de residuos con YOLO + Arduino + Supabase. Este
+módulo es la "puerta de entrada" del sistema: detecta residuos, abre la
+caneca correspondiente y persiste cada evento.
 
-## Requisitos
+## Arquitectura
 
-- Python 3.11+ (recomendado)
-- Webcam (modo cámara real)
-- Windows/macOS/Linux con escritorio si usas vista previa OpenCV (`imshow`)
-
-## Instalación
-
-Desde la raíz del proyecto:
-
-```powershell
-# Crear entorno virtual
-python -m venv .venv
-
-# Activar (Windows PowerShell)
-.\.venv\Scripts\Activate.ps1
-
-# Instalar dependencias
-pip install -r requirements.txt
 ```
+┌──────────────┐    ┌────────────────┐    ┌────────────────┐
+│  Cámara      │───▶│  YOLO          │───▶│  send_to_ard.  │──▶ Arduino
+│  (OpenCV)    │    │  (ultralytics) │    │  (BestDetection)│
+└──────────────┘    └────────────────┘    └────────────────┘
+                                                  │
+                                                  ▼ (arduino first, sync)
+                                         ┌────────────────┐
+                                         │  Supabase      │ (async, queue + worker)
+                                         │  Event Writer  │──▶ Supabase REST
+                                         └────────────────┘
 
-El clasificador usa por defecto `model/best.pt` (modelo custom del proyecto).
+Manual bin opening (web → Python):
 
-Opcional: copia o edita `.env` (variables con prefijo `RAS_`). Ejemplo para Arduino:
-
-```env
-RAS_SERIAL_PORT=COM3
-RAS_SERIAL_BAUDRATE=9600
-```
-
-## Ejecutar el proyecto
-
-Todos los comandos asumen el entorno activado (`.venv`) y estar en la carpeta del repo.
-
-### Simulación rápida (sin cámara ni YOLO)
-
-Un ciclo con categoría fija y sensor inmediato:
-
-```powershell
-python main.py --sensor immediate --once
-```
-
-Varios ciclos: pulsa **ENTER** entre cada uno (simula sensor de cercanía):
-
-```powershell
-python main.py
-```
-
-### Webcam + YOLO (uso habitual)
-
-**Un ciclo** al iniciar (abre cámara, 5 s para colocar el objeto, **ESC** captura antes, clasifica y termina):
-
-```powershell
-python main.py --camera opencv --classifier yolo --sensor immediate
-```
-
-**Un ciclo cada vez que tú indiques** (recomendado): tras cada resultado, pulsa **ENTER** para el siguiente:
-
-```powershell
-python main.py --camera opencv --classifier yolo
-```
-
-Equivalente explícito:
-
-```powershell
-python main.py --camera opencv --classifier yolo --sensor enter
-```
-
-### Arduino (sensor serial)
-
-Configura `RAS_SERIAL_PORT` en `.env` o pásalo por CLI. El programa espera líneas como `DETECTED`:
-
-```powershell
-python main.py --camera opencv --classifier yolo --sensor serial --serial-port COM3
-```
-
-### Modo hardware por `.env`
-
-Si en `.env` tienes `RAS_RUN_MODE=hardware`, puedes omitir `--camera opencv` (usa webcam por defecto):
-
-```powershell
-# .env: RAS_RUN_MODE=hardware
-python main.py --classifier yolo
-```
-
-### Otros comandos útiles
-
-| Objetivo | Comando |
-|----------|---------|
-| Un solo ciclo (cualquier sensor) | `python main.py --once ...` |
-| Bucle sin fin con `immediate` | `python main.py --sensor immediate --continuous --camera opencv --classifier yolo` |
-| Sin ventanas (servidor/CI) | `python main.py --camera opencv --classifier yolo --no-preview` |
-| Otra cámara (índice 1) | `python main.py --camera opencv --camera-index 1 --classifier yolo` |
-| Imagen fija en simulación | `python main.py --fixture ruta\imagen.jpg --classifier yolo` |
-| Ignorar clases YOLO | `python main.py --camera opencv --classifier yolo --yolo-skip person` |
-| Confianza YOLO | `python main.py --camera opencv --classifier yolo --yolo-conf 0.5` |
-| Confianza minima de categoria | `python main.py --camera opencv --classifier yolo --yolo-category-conf 0.45` |
-| Stub sin ML | `python main.py --classifier stub --category organic` |
-
-Detener un bucle: **Ctrl+C**.
-
-## Comportamiento del bucle
-
-| `--sensor` | Por defecto |
-|------------|-------------|
-| `enter` | Repite; cada ciclo espera **ENTER** |
-| `serial` | Repite; cada ciclo espera línea del Arduino |
-| `immediate` | **Un ciclo y sale**; usa `--continuous` para repetir sin parar |
-
-## Variables de entorno (`RAS_*`)
-
-| Variable | Descripción |
-|----------|-------------|
-| `RAS_RUN_MODE` | `simulation` (default) o `hardware` |
-| `RAS_SERIAL_PORT` | Puerto COM del Arduino |
-| `RAS_SERIAL_BAUDRATE` | Baudios (default `9600`) |
-| `RAS_CAMERA_DEVICE_INDEX` | Índice de webcam (default `0`) |
-| `RAS_CAMERA_PLACEMENT_PREVIEW_MS` | Segundos de vista previa para colocar objeto (default `5000`) |
-| `RAS_CLASSIFIER_BACKEND` | `stub` o `yolo` |
-| `RAS_YOLO_MODEL_PATH` | Modelo `.pt` (default `model/best.pt`) |
-| `RAS_YOLO_CONFIDENCE` | Umbral 0–1 (default `0.35`) |
-| `RAS_YOLO_CATEGORY_CONFIDENCE` | Umbral minimo para aceptar categoria final (default `0.45`) |
-| `RAS_YOLO_SKIP_CLASSES` | Clases a ignorar (default vacío) |
-
-## Mapeo actual a canecas (3 canecas)
-
-- `plastic` y `metal` -> `BLANCO` (aprovechables)
-- `organic` -> `VERDE` (organicos)
-- `unknown` -> `NO_ACTION` (no abre ninguna caneca)
-
-## Dashboard de cámara
-
-- Fondo del layout de vista previa: `asset/dashboard.png`
-- Modelo custom usado por defecto: `model/best.pt`
-- Si no tienes imágenes por clase, el panel lateral muestra texto:
-  - clase detectada
-  - categoría
-  - confianza
-  - destino de caneca
-
-## Ayuda CLI
-
-```powershell
-python main.py --help
+  Web app INSERT ──▶ manual_bin_openings
+                          │
+                          └─postgres_changes (Realtime)─▶ SupabaseBinCommandSubscriber
+                                                              │
+                                                              ▼
+                                                       BinCommandHandler
+                                                              │
+                                                              ▼
+                                                       arduino_bridge.request_open
+                                                              │
+                                                              ▼
+                                                       Arduino abre la caneca
 ```
 
 ## Estructura
 
 ```
-domain/       Modelos y mapeo categoría → comando
-ports/        Protocolos (interfaces)
-application/  Pipeline del ciclo
-adapters/     Cámara, YOLO, sensor, actuador
-main.py       Punto de entrada CLI
-config.py     Settings (Pydantic + .env)
+recycling-automation-ai/
+├── main.py                          # entrypoint: wiring
+├── config.py                        # Pydantic v2 Settings (prefijo RAS_)
+├── requirements.txt
+├── .env.example                     # variables de entorno
+├── README.md
+├── migrations/
+│   └── 0001_init.sql                # schema Supabase (tablas + RLS + realtime)
+├── domain/
+│   ├── detection_event.py           # dataclass del evento
+│   ├── model_loader.py
+│   ├── waste_classes.py
+│   └── waste_mapping.py
+├── ports/
+│   ├── persistence.py               # Protocol: DetectionRepository, ManualOpeningRepository
+│   └── realtime.py                  # Protocol: BinCommandSubscriber
+├── adapters/
+│   ├── arduino_serial.py            # bridge Arduino + request_open
+│   ├── scanning_tkinter.py          # YOLO scanner + callback BestDetection
+│   ├── ui_tkinter.py                # ventana Tkinter
+│   ├── supabase_persistence.py      # implementación Supabase de los repos
+│   └── supabase_realtime.py         # suscriptor postgres_changes
+└── application/
+    ├── event_writer.py              # queue.Queue + worker + fallback JSONL
+    ├── bin_command_handler.py       # per-station lock + Arduino + UPDATE
+    └── persistence_service.py       # orquestador
 ```
-Sin Arduino, paso a paso:
-python main.py --sensor enter --camera opencv --classifier yolo
 
-Sin Arduino, ciclos continuos:
-python main.py --sensor immediate --continuous --camera opencv --classifier yolo
+## 12 clases YOLO (kendrickfff/waste-classification-yolov8-ken)
 
-Con Arduino:
-python main.py --sensor serial --serial-port COM4 --serial-baud 9600 --camera opencv --classifier yolo
+| Clase            | Caneca Arduino | Categoría         |
+|------------------|----------------|-------------------|
+| battery          | ROJO           | No aprovechables  |
+| biological       | VERDE          | Orgánicos         |
+| brown-glass      | VERDE          | Orgánicos         |
+| cardboard        | BLANCO         | Aprovechables     |
+| clothes          | NEGRO          | No aprovechables  |
+| green-glass      | VERDE          | Orgánicos         |
+| metal            | BLANCO         | Aprovechables     |
+| paper            | BLANCO         | Aprovechables     |
+| plastic          | BLANCO         | Aprovechables     |
+| shoes            | NEGRO          | No aprovechables  |
+| trash            | NEGRO          | No aprovechables  |
+| white-glass      | VERDE          | Orgánicos         |
+
+## Variables de entorno
+
+Copia `.env.example` a `.env` y completa:
+
+| Variable                          | Descripción                                             | Fuente                                         |
+|----------------------------------|---------------------------------------------------------|------------------------------------------------|
+| `RAS_SERIAL_PORT`                | Puerto del Arduino (ej. `COM3`, `/dev/ttyUSB0`).        | Administrador de dispositivos / `ls /dev/tty*`  |
+| `RAS_SERIAL_BAUDRATE`            | Baudios (default `9600`).                               | Firmware del Arduino                           |
+| `RAS_CAMERA_DEVICE_INDEX`        | Índice de la cámara (default `0`).                      | Sistema operativo                              |
+| `RAS_YOLO_MODEL_PATH`            | Ruta al `.pt` o `None` para descargar de HF.            | Local o Hugging Face                           |
+| `RAS_YOLO_CONFIDENCE`            | Umbral mínimo de confianza (default `0.35`).            | -                                              |
+| `RAS_STATION_ID`                 | Identificador de la estación (default `station-001`).   | Debe existir en la tabla `stations`            |
+| `RAS_SUPABASE_URL`               | Project URL de Supabase.                                | Project Settings → API                         |
+| `RAS_SUPABASE_SERVICE_KEY`       | **service_role** secret (servidor, no el anon).         | Project Settings → API                         |
+| `RAS_LOCAL_BUFFER_DIR`           | Carpeta para el buffer offline (default `var`).         | Local                                          |
+
+## Instalación
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+# (opcional) PyTorch con CUDA: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+cp .env.example .env
+# Edita .env con tus credenciales
+```
+
+## Migración de base de datos
+
+Aplica `migrations/0001_init.sql` en el SQL editor de Supabase (es idempotente).
+Crea las tablas `stations`, `detections`, `manual_bin_openings`, las
+políticas de RLS y activa Realtime sobre `manual_bin_openings`.
+
+## Ejecución
+
+```bash
+python main.py
+```
+
+La ventana de Tkinter permanece oculta hasta que el Arduino envíe `DETECTED`
+vía serial. Cuando llega una detección:
+
+1. YOLO clasifica el objeto durante ~8 segundos.
+2. Se envía el comando al Arduino (`BLANCO` / `NEGRO` / `VERDE` / `ROJO`).
+3. El evento se encola para persistirlo en Supabase (batch async).
+4. Cuando Arduino envía `DEPOSITO_COMPLETO:`, la ventana se oculta y el
+   sistema vuelve a esperar.
+
+## Modo manual desde la web
+
+1. La web inserta una fila en `manual_bin_openings` con `status='pending'`.
+2. El subscriber de Supabase Realtime la recibe en el proceso Python.
+3. `BinCommandHandler` la traduce en `arduino_bridge.request_open(bin)`.
+4. La fila se actualiza a `status='opened'` (o `error`) con `latency_ms`.
+5. La UI web ve la actualización vía `postgres_changes` y muestra el resultado.
+
+### Recovery on reconnect
+
+Si el proceso Python está offline cuando se inserta una fila, al
+reconectarse el subscriber ejecuta un `SELECT pending` de los últimos 5
+minutos y los procesa. Las filas más viejas se marcan `timeout`.
+
+### Fallback offline
+
+Si Supabase está caído, los eventos se escriben en
+`var/detection_buffer.jsonl` y se reintentan al reconectar (en el
+próximo arranque del worker).
+
+## Múltiples estaciones (futuro)
+
+`PersistenceService.add_station(station_id, bridge)` permite registrar
+múltiples bridges para un solo proceso. Cada estación tiene su propio
+lock para serializar aperturas. Ejecuta un proceso por estación
+(`RAS_STATION_ID=station-002 python main.py`) para una configuración
+más simple.

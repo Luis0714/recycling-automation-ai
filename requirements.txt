@@ -13,6 +13,11 @@ huggingface_hub>=0.23.0
 # Arduino (HC-SR04 + servos). Opcional: solo si conectas el puerto serial.
 pyserial>=3.5,<4
 
+# Configuración (Pydantic v2) y cliente Supabase (REST + Realtime WebSocket).
+pydantic>=2.6,<3
+pydantic-settings>=2.2,<3
+supabase>=2.4,<3
+
 # torch — requerido por ultralytics y usado para detectar CUDA en scanning_tkinter.
 # pip install -r requirements.txt instala torch CPU por defecto.
 # Para GPU NVIDIA, después ejecuta (ejemplo CUDA 12.1):
