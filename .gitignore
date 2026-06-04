@@ -18,3 +18,14 @@ htmlcov/
 .ruff_cache/
 yolov8*.pt
 runs/
+var/
+*.egg
+pip-wheel-metadata/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
